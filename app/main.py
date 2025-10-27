@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Any
 
 
@@ -40,47 +40,41 @@ class Visitor:
 
 
 class SlideLimitationValidator(ABC):
-    def __init__(self) -> None:
-        pass
+    def __init__(self, age: int, weight: int, height: int) -> None:
+        self.age = age
+        self.weight = weight
+        self.height = height
 
-    def validate(self, visitor: Visitor) -> bool:
-        raise NotImplementedError
+    @abstractmethod
+    def validate(self) -> bool:
+        pass
 
 
 class ChildrenSlideLimitationValidator(SlideLimitationValidator):
-    def __init__(self) -> None:
-        super().__init__()
-        self.age_range = IntegerRange(4, 14)
-        self.height_range = IntegerRange(80, 120)
-        self.weight_range = IntegerRange(20, 50)
-
-    def validate(self, visitor: Visitor) -> bool:
+    def validate(self) -> bool:
         return (
-            self.age_range.validate(visitor.age)
-            and self.height_range.validate(visitor.height)
-            and self.weight_range.validate(visitor.weight)
+            IntegerRange(4, 14).validate(self.age)
+            and IntegerRange(80, 120).validate(self.height)
+            and IntegerRange(20, 50).validate(self.weight)
         )
 
 
 class AdultSlideLimitationValidator(SlideLimitationValidator):
-    def __init__(self) -> None:
-        super().__init__()
-        self.age_range = IntegerRange(14, 60)
-        self.height_range = IntegerRange(120, 220)
-        self.weight_range = IntegerRange(50, 120)
-
-    def validate(self, visitor: Visitor) -> bool:
+    def validate(self) -> bool:
         return (
-            self.age_range.validate(visitor.age)
-            and self.height_range.validate(visitor.height)
-            and self.weight_range.validate(visitor.weight)
+            IntegerRange(14, 60).validate(self.age)
+            and IntegerRange(120, 220).validate(self.height)
+            and IntegerRange(50, 120).validate(self.weight)
         )
 
 
 class Slide:
     def __init__(self, name: str, limitation_class: type) -> None:
         self.name = name
-        self.limitation = limitation_class()
+        self.limitation_class = limitation_class
 
     def can_access(self, visitor: Visitor) -> bool:
-        return self.limitation.validate(visitor)
+        validator = self.limitation_class(
+            visitor.age, visitor.weight, visitor.height
+        )
+        return validator.validate()
